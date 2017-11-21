@@ -1,0 +1,8 @@
+*.tfstate.backup
+*.tfstate
+.DS_Store
+.terraform
+bootstrap-scripts/env.rc
+data/*.pem
+data/*key
+data/*.pub
