@@ -29,6 +29,10 @@ data "aws_subnet" "bastion_subnet" {
   id = "${var.bastion_subnet_id}"
 }
 
+data "aws_subnet" "nexus_subnet" {
+  id = "${var.nexus_subnet_id}"
+}
+
 # --------------------------------------------------------------------------------------------------------------
 # VPC definition
 # --------------------------------------------------------------------------------------------------------------
@@ -145,7 +149,7 @@ resource "aws_network_acl_rule" "test_http_from_bastion" {
   egress         = false
   protocol       = "tcp"
   rule_action    = "allow"
-  cidr_block     = "${data.aws_subnet.bastion_subnet.cidr_block}"
+  cidr_block     = "${data.aws_subnet.nexus_subnet.cidr_block}"
   from_port      = 1024
   to_port        = 65535
 }

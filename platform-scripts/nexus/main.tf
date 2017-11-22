@@ -109,14 +109,6 @@ resource "aws_security_group" "nexus_http" {
     protocol    = "tcp"
     cidr_blocks = "${var.bastion_inbound}"
   }
-
-  // TODO: could be improved
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }
 
 # --------------------------------------------------------------------------------------------------------------

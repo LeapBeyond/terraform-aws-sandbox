@@ -19,6 +19,7 @@ module "securevpc" {
   bastion_vpc_id    = "${module.bastion.bastion_vpc_id}"
   bastion_subnet_id = "${module.bastion.bastion_subnet_id}"
   bastion_rt_id     = "${module.bastion.bastion_rt_id}"
+  nexus_subnet_id   = "${module.nexus.nexus_subnet_id}"
   test_key          = "${var.test_key}"
 }
 

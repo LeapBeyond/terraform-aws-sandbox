@@ -9,6 +9,7 @@ variable "tags" {
 
 variable "bastion_vpc_id" {}
 variable "bastion_subnet_id" {}
+variable "nexus_subnet_id" {}
 variable "test_key" {}
 variable "bastion_rt_id" {}
 

@@ -13,3 +13,7 @@ output "connect_string" {
 output "url" {
   value = "http://${aws_spot_instance_request.nexus.public_dns}:8081"
 }
+
+output "nexus_subnet_id" {
+  value = "${aws_subnet.nexus_subnet.id}"
+}
