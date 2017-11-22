@@ -4,11 +4,11 @@ provider "aws" {
 }
 
 module "bastion" {
-  source      = "./bastion"
-  tags        = "${var.tags}"
-  bastion_key = "${var.bastion_key}"
-  test_key    = "${var.test_key}"
-  aws_region  = "${var.aws_region}"
+  source              = "./bastion"
+  tags                = "${var.tags}"
+  bastion_key         = "${var.bastion_key}"
+  test_key            = "${var.test_key}"
+  aws_region          = "${var.aws_region}"
   bastion_ssh_inbound = "${var.bastion_inbound}"
 }
 
@@ -29,4 +29,5 @@ module "nexus" {
   bastion_inbound   = "${var.bastion_inbound}"
   bastion_vpc_id    = "${module.bastion.bastion_vpc_id}"
   nexus_key         = "${var.bastion_key}"
+  test_vpc_cidr     = "${module.securevpc.test_vpc_cidr}"
 }

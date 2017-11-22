@@ -1,3 +1,6 @@
+# --------------------------------------------------------------------------------------------------------------
+# various data lookups
+# --------------------------------------------------------------------------------------------------------------
 data "aws_ami" "target_ami" {
   most_recent = true
 
@@ -17,6 +20,26 @@ data "aws_vpc" "defaultvpc" {
   cidr_block = "172.31.0.0/16"
 }
 
+data "aws_iam_policy_document" "ec2-service-role-policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+# TODO: parameterise that nacl
+variable "default_network_acl_id" {
+  default = "acl-6c6a2f05"
+}
+
+# --------------------------------------------------------------------------------------------------------------
+# lock down the default security group and NACL
+# --------------------------------------------------------------------------------------------------------------
+
 resource "aws_default_security_group" "default" {
   vpc_id = "${data.aws_vpc.defaultvpc.id}"
 
@@ -28,9 +51,8 @@ resource "aws_default_security_group" "default" {
   }
 }
 
-# TOD: parameterise that nacl
 resource "aws_default_network_acl" "support" {
-  default_network_acl_id = "acl-6c6a2f05"
+  default_network_acl_id = "${var.default_network_acl_id}"
 
   tags {
     Name    = "default_nacl"
@@ -40,6 +62,10 @@ resource "aws_default_network_acl" "support" {
   }
 }
 
+# --------------------------------------------------------------------------------------------------------------
+# define the bastion VPC
+# --------------------------------------------------------------------------------------------------------------
+
 resource "aws_vpc" "bastion_vpc" {
   cidr_block           = "${var.bastion_vpc_cidr}"
   enable_dns_support   = true
@@ -47,19 +73,6 @@ resource "aws_vpc" "bastion_vpc" {
 
   tags {
     Name    = "Bastion-vpc"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_subnet" "bastion_subnet" {
-  vpc_id                  = "${aws_vpc.bastion_vpc.id}"
-  cidr_block              = "${var.bastion_subnet_cidr}"
-  map_public_ip_on_launch = true
-
-  tags {
-    Name    = "Bastion-subnet"
     Project = "${var.tags["project"]}"
     Owner   = "${var.tags["owner"]}"
     Client  = "${var.tags["client"]}"
@@ -77,11 +90,24 @@ resource "aws_internet_gateway" "bastion-gateway" {
   }
 }
 
-resource "aws_route_table_association" "bastion-rta" {
-  subnet_id      = "${aws_subnet.bastion_subnet.id}"
-  route_table_id = "${aws_route_table.bastion-rt.id}"
+# --------------------------------------------------------------------------------------------------------------
+# define the bastion subnet
+# --------------------------------------------------------------------------------------------------------------
+
+resource "aws_subnet" "bastion_subnet" {
+  vpc_id                  = "${aws_vpc.bastion_vpc.id}"
+  cidr_block              = "${var.bastion_subnet_cidr}"
+  map_public_ip_on_launch = true
+
+  tags {
+    Name    = "Bastion-subnet"
+    Project = "${var.tags["project"]}"
+    Owner   = "${var.tags["owner"]}"
+    Client  = "${var.tags["client"]}"
+  }
 }
 
+# ------------------------ route table associated with the subnet ----------------------------
 resource "aws_route_table" "bastion-rt" {
   vpc_id = "${aws_vpc.bastion_vpc.id}"
 
@@ -97,6 +123,13 @@ resource "aws_route_table" "bastion-rt" {
     Client  = "${var.tags["client"]}"
   }
 }
+
+resource "aws_route_table_association" "bastion-rta" {
+  subnet_id      = "${aws_subnet.bastion_subnet.id}"
+  route_table_id = "${aws_route_table.bastion-rt.id}"
+}
+
+# ------------------------ security groups --------------------------------------------------------
 
 resource "aws_security_group" "bastion_ssh" {
   name        = "bastion_ssh"
@@ -129,6 +162,8 @@ resource "aws_default_security_group" "bastion_default" {
   }
 }
 
+# ------------------------ IAM role for bastion instance -------------------------------------------------
+
 resource "aws_iam_role" "bastion_role" {
   name_prefix           = "bastion"
   path                  = "/"
@@ -146,6 +181,8 @@ resource "aws_iam_instance_profile" "bastion_profile" {
   name_prefix = "bastion"
   role        = "${aws_iam_role.bastion_role.name}"
 }
+
+# ------------------------ Bastion Instance --------------------------------------------------------
 
 resource "aws_instance" "bastion" {
   ami                    = "${data.aws_ami.target_ami.id}"
@@ -187,11 +224,6 @@ resource "aws_instance" "bastion" {
   }
 }
 
-resource "aws_codecommit_repository" "bastion-smoketest" {
-  repository_name = "bastion-smoketest"
-  description     = "smoke test scripts for the bastion."
-}
-
 resource "null_resource" "update" {
   connection {
     type        = "ssh"
@@ -216,13 +248,9 @@ resource "null_resource" "update" {
   }
 }
 
-data "aws_iam_policy_document" "ec2-service-role-policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
+# -------------------------------   code commit repository -----------------------------
+# TODO probably drop this or move elsewhere.
+resource "aws_codecommit_repository" "bastion-smoketest" {
+  repository_name = "bastion-smoketest"
+  description     = "smoke test scripts for the bastion."
 }

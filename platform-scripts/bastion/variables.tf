@@ -3,7 +3,7 @@ variable "bastion_key" {}
 variable "test_key" {}
 
 variable "bastion_ssh_inbound" {
-  type    = "list"
+  type = "list"
 }
 
 variable "tags" {

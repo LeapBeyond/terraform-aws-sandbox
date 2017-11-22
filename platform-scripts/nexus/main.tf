@@ -13,16 +13,17 @@ data "aws_ami" "target_ami" {
 }
 
 resource "aws_spot_instance_request" "nexus" {
-  ami           = "${data.aws_ami.target_ami.id}"
-  spot_price    = "0.021"
-  key_name      = "${var.nexus_key}"
-  subnet_id     = "${var.bastion_subnet_id}"
-  instance_type = "${var.nexus_instance_type}"
+  ami                  = "${data.aws_ami.target_ami.id}"
+  spot_price           = "0.021"
+  key_name             = "${var.nexus_key}"
+  subnet_id            = "${var.bastion_subnet_id}"
+  instance_type        = "${var.nexus_instance_type}"
   wait_for_fulfillment = true
-  
+
   vpc_security_group_ids = [
     "${var.bastion_ssh_sg_id}",
     "${aws_security_group.nexus_http.id}",
+    "${aws_security_group.http_from_test.id}"
   ]
 
   root_block_device = {
@@ -76,6 +77,19 @@ resource "aws_security_group" "nexus_http" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "http_from_test" {
+  name        = "http_from_test"
+  description = "allows http from anywhere in the test VPC"
+  vpc_id      = "${var.bastion_vpc_id}"
+
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["${var.test_vpc_cidr}"]
   }
 }
 

@@ -138,6 +138,22 @@ resource "aws_network_acl_rule" "test_ssh_from_bastion" {
   to_port        = 22
 }
 
+/*
+ * TODO: this is suboptimal and should be fixed - it's open to the port range so that the nexus box listening on 8081
+ * can reply to requests from the "secure" vpc. rather than opening to the entire "bastion" subnet, we should be narrowing
+ * it down to just the nexus box or a subnet the nexus box is in.
+ */
+resource "aws_network_acl_rule" "test_http_from_bastion" {
+  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
+  rule_number    = 110
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "${data.aws_subnet.bastion_subnet.cidr_block}"
+  from_port      = 1024
+  to_port        = 65535
+}
+
 # --------------------------------------------------------------------------------------------------------------
 # subnets within the VPC
 # --------------------------------------------------------------------------------------------------------------

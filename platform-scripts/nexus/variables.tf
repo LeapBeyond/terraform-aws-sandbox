@@ -2,6 +2,7 @@ variable "nexus_key" {}
 variable "bastion_ssh_sg_id" {}
 variable "bastion_subnet_id" {}
 variable "bastion_vpc_id" {}
+variable "test_vpc_cidr" {}
 
 variable "bastion_inbound" {
   type = "list"

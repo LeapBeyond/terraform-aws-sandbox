@@ -18,6 +18,10 @@ output "nexus_connect_string" {
   value = "${module.nexus.connect_string}"
 }
 
+output "nexus_private_dns" {
+  value = "${module.nexus.nexus_private_dns}"
+}
+
 output "nexus_url" {
   value = "${module.nexus.url}"
 }
