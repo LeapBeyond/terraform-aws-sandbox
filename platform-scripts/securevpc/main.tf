@@ -138,11 +138,6 @@ resource "aws_network_acl_rule" "test_ssh_from_bastion" {
   to_port        = 22
 }
 
-/*
- * TODO: this is suboptimal and should be fixed - it's open to the port range so that the nexus box listening on 8081
- * can reply to requests from the "secure" vpc. rather than opening to the entire "bastion" subnet, we should be narrowing
- * it down to just the nexus box or a subnet the nexus box is in.
- */
 resource "aws_network_acl_rule" "test_http_from_nexus" {
   network_acl_id = "${aws_network_acl.test_nacl_main.id}"
   rule_number    = 110
@@ -223,7 +218,7 @@ resource "aws_instance" "ssmtest" {
   instance_type               = "${var.ec2_instance_type}"
   key_name                    = "${var.test_key}"
   subnet_id                   = "${aws_subnet.test_subnet.id}"
-  vpc_security_group_ids      = ["${aws_security_group.test_ssh.id}"]
+  vpc_security_group_ids      = ["${aws_security_group.test_ssh.id}", "${aws_security_group.test_nexus.id}"]
   iam_instance_profile        = "${aws_iam_instance_profile.test_ssm_profile.name}"
 
   # user_data = "${file("${path.module}/install_ssh_agent.sh")}"
@@ -284,6 +279,3 @@ resource "aws_security_group" "test_nexus" {
     cidr_blocks = ["${data.aws_subnet.nexus_subnet.cidr_block}"]
   }
 }
-
-// TODO: 8081 to nexus subnet.
-
