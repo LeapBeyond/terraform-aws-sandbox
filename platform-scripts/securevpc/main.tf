@@ -265,4 +265,25 @@ resource "aws_security_group" "test_ssh" {
   }
 }
 
+resource "aws_security_group" "test_nexus" {
+  name        = "test_nexus"
+  description = "allows access to and from nexus"
+  vpc_id      = "${aws_vpc.test_vpc.id}"
+
+  ingress {
+    from_port   = 1024
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["${data.aws_subnet.nexus_subnet.cidr_block}"]
+  }
+
+  egress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["${data.aws_subnet.nexus_subnet.cidr_block}"]
+  }
+}
+
 // TODO: 8081 to nexus subnet.
+
