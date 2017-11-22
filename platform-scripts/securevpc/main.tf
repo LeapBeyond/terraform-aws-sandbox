@@ -143,7 +143,7 @@ resource "aws_network_acl_rule" "test_ssh_from_bastion" {
  * can reply to requests from the "secure" vpc. rather than opening to the entire "bastion" subnet, we should be narrowing
  * it down to just the nexus box or a subnet the nexus box is in.
  */
-resource "aws_network_acl_rule" "test_http_from_bastion" {
+resource "aws_network_acl_rule" "test_http_from_nexus" {
   network_acl_id = "${aws_network_acl.test_nacl_main.id}"
   rule_number    = 110
   egress         = false
@@ -152,6 +152,17 @@ resource "aws_network_acl_rule" "test_http_from_bastion" {
   cidr_block     = "${data.aws_subnet.nexus_subnet.cidr_block}"
   from_port      = 1024
   to_port        = 65535
+}
+
+resource "aws_network_acl_rule" "test_http_to_nexus" {
+  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
+  rule_number    = 110
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "${data.aws_subnet.nexus_subnet.cidr_block}"
+  from_port      = 8081
+  to_port        = 8081
 }
 
 # --------------------------------------------------------------------------------------------------------------
@@ -253,3 +264,5 @@ resource "aws_security_group" "test_ssh" {
     cidr_blocks = "${var.ssh_inbound}"
   }
 }
+
+// TODO: 8081 to nexus subnet.
