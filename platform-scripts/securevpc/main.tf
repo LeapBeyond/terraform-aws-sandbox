@@ -21,10 +21,6 @@ data "aws_iam_policy_document" "ssm-service-role-policy" {
   }
 }
 
-data "aws_route_table" "bastion_route_table" {
-  subnet_id = "${var.bastion_subnet_id}"
-}
-
 data "aws_vpc" "bastion_vpc" {
   id = "${var.bastion_vpc_id}"
 }
@@ -88,7 +84,7 @@ resource "aws_route" "test_to_bastion" {
 }
 
 resource "aws_route" "bastion_to_test" {
-  route_table_id            = "${data.aws_route_table.bastion_route_table.id}"
+  route_table_id            = "${var.bastion_rt_id}"
   destination_cidr_block    = "${var.test_vpc_cidr}"
   vpc_peering_connection_id = "${aws_vpc_peering_connection.bastion_to_test.id}"
 }

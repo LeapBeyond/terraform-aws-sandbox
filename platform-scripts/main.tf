@@ -18,6 +18,7 @@ module "securevpc" {
   ssh_inbound       = ["${module.bastion.bastion_subnet_cidr}"]
   bastion_vpc_id    = "${module.bastion.bastion_vpc_id}"
   bastion_subnet_id = "${module.bastion.bastion_subnet_id}"
+  bastion_rt_id     = "${module.bastion.bastion_rt_id}"
   test_key          = "${var.test_key}"
 }
 
