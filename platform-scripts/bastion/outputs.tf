@@ -25,3 +25,7 @@ output "bastion_subnet_id" {
 output "bastion_ssh_sg_id" {
   value = "${aws_security_group.bastion_ssh.id}"
 }
+
+output "bastion_rt_id" {
+  value = "${aws_route_table.bastion-rt.id}"
+}

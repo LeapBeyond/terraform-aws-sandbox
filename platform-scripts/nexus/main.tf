@@ -15,10 +15,6 @@ data "aws_ami" "target_ami" {
   }
 }
 
-data "aws_route_table" "bastion_rt" {
-  subnet_id = "${var.bastion_subnet_id}"
-}
-
 # --------------------------------------------------------------------------------------------------------------
 # define the nexus subnet
 # --------------------------------------------------------------------------------------------------------------
@@ -38,7 +34,7 @@ resource "aws_subnet" "nexus_subnet" {
 
 resource "aws_route_table_association" "nexus-rta" {
   subnet_id      = "${aws_subnet.nexus_subnet.id}"
-  route_table_id = "${data.aws_route_table.bastion_rt.id}"
+  route_table_id = "${var.bastion_rt_id}"
 }
 
 # --------------------------------------------------------------------------------------------------------------
