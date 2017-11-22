@@ -1,3 +1,6 @@
+# --------------------------------------------------------------------------------------------------------------
+# various data lookups
+# --------------------------------------------------------------------------------------------------------------
 data "aws_ami" "target_ami" {
   most_recent = true
 
@@ -12,18 +15,48 @@ data "aws_ami" "target_ami" {
   }
 }
 
+data "aws_route_table" "bastion_rt" {
+  subnet_id = "${var.bastion_subnet_id}"
+}
+
+# --------------------------------------------------------------------------------------------------------------
+# define the nexus subnet
+# --------------------------------------------------------------------------------------------------------------
+
+resource "aws_subnet" "nexus_subnet" {
+  vpc_id                  = "${var.bastion_vpc_id}"
+  cidr_block              = "${var.nexus_subnet_cidr}"
+  map_public_ip_on_launch = true
+
+  tags {
+    Name    = "Nexus-subnet"
+    Project = "${var.tags["project"]}"
+    Owner   = "${var.tags["owner"]}"
+    Client  = "${var.tags["client"]}"
+  }
+}
+
+resource "aws_route_table_association" "nexus-rta" {
+  subnet_id      = "${aws_subnet.nexus_subnet.id}"
+  route_table_id = "${data.aws_route_table.bastion_rt.id}"
+}
+
+# --------------------------------------------------------------------------------------------------------------
+# define the nexus instance as a spot instance
+# --------------------------------------------------------------------------------------------------------------
+
 resource "aws_spot_instance_request" "nexus" {
   ami                  = "${data.aws_ami.target_ami.id}"
   spot_price           = "0.021"
   key_name             = "${var.nexus_key}"
-  subnet_id            = "${var.bastion_subnet_id}"
+  subnet_id            = "${aws_subnet.nexus_subnet.id}"
   instance_type        = "${var.nexus_instance_type}"
   wait_for_fulfillment = true
 
   vpc_security_group_ids = [
     "${var.bastion_ssh_sg_id}",
     "${aws_security_group.nexus_http.id}",
-    "${aws_security_group.http_from_test.id}"
+    "${aws_security_group.http_from_test.id}",
   ]
 
   root_block_device = {
@@ -59,6 +92,16 @@ sudo -u nexus ~nexus/nexus-3.6.1-02/bin/nexus start
 EOF
 }
 
+resource "null_resource" "update" {
+  connection {
+    type        = "ssh"
+    agent       = false
+    user        = "${var.nexus_user}"
+    host        = "${aws_instance.nexus.public_dns}"
+    private_key = "${file("${path.root}/../data/${var.nexus_key}.pem")}"
+  }
+}
+
 resource "aws_security_group" "nexus_http" {
   name        = "nexus_http"
   description = "allows http access to bastion"
@@ -80,6 +123,10 @@ resource "aws_security_group" "nexus_http" {
   }
 }
 
+# --------------------------------------------------------------------------------------------------------------
+# security groups for the instance
+# --------------------------------------------------------------------------------------------------------------
+
 resource "aws_security_group" "http_from_test" {
   name        = "http_from_test"
   description = "allows http from anywhere in the test VPC"
@@ -90,15 +137,5 @@ resource "aws_security_group" "http_from_test" {
     to_port     = 8081
     protocol    = "tcp"
     cidr_blocks = ["${var.test_vpc_cidr}"]
-  }
-}
-
-resource "null_resource" "update" {
-  connection {
-    type        = "ssh"
-    agent       = false
-    user        = "${var.nexus_user}"
-    host        = "${aws_instance.nexus.public_dns}"
-    private_key = "${file("${path.root}/../data/${var.nexus_key}.pem")}"
   }
 }

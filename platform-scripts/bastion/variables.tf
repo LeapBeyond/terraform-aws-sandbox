@@ -27,9 +27,9 @@ variable "bastion_vpc_cidr" {
   default = "172.16.0.0/16"
 }
 
-# 172.16.10.0 - 172.16.10.255
+# 172.16.10.0 - 172.16.10.63
 variable "bastion_subnet_cidr" {
-  default = "172.16.10.0/24"
+  default = "172.16.10.0/26"
 }
 
 variable "root_vol_size" {
