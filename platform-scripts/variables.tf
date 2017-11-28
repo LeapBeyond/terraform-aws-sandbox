@@ -6,9 +6,13 @@ variable "tags" {
   }
 }
 
+# 213.205.252.0/24 - tethered to my phone
+# 188.183.134.0/24 - airbnb
+# 94.101.220.0/24 - NZ guest network
+
 variable "bastion_inbound" {
   type    = "list"
-  default = ["192.168.1.0/24", "151.236.44.229/32", "94.101.220.0/24", "185.122.190.0/24"]
+  default = ["213.205.252.0/24", "188.183.134.0/24", "94.101.220.0/24"]
 }
 
 /* variables to inject via terraform.tfvars */
