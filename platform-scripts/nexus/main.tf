@@ -43,7 +43,7 @@ resource "aws_route_table_association" "nexus-rta" {
 
 resource "aws_spot_instance_request" "nexus" {
   ami                  = "${data.aws_ami.target_ami.id}"
-  spot_price           = "0.021"
+  spot_price           = "${var.nexus_instance_spot_price}"
   key_name             = "${var.nexus_key}"
   subnet_id            = "${aws_subnet.nexus_subnet.id}"
   instance_type        = "${var.nexus_instance_type}"

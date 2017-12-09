@@ -25,6 +25,10 @@ variable "nexus_instance_type" {
   default = "m4.large"
 }
 
+variable "nexus_instance_spot_price" {
+  default = "0.021"
+}
+
 # 172.16.10.64 - 172.16.10.127
 variable "nexus_subnet_cidr" {
   default = "172.16.10.64/26"
