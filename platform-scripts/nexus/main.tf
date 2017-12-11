@@ -76,7 +76,10 @@ resource "aws_spot_instance_request" "nexus" {
   user_data = <<EOF
 #!/bin/bash
 yum update -y
-yum install -y java-1.8.0-openjdk-1.8.0.151-1.b12.35.amzn1.x86_64
+yum erase -y ntp*
+yum install -y java-1.8.0-openjdk-1.8.0.151-1.b12.35.amzn1.x86_64 chrony
+echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+service chronyd start
 alternatives --remove java /usr/lib/jvm/jre-1.7.0-openjdk.x86_64/bin/java
 useradd nexus
 echo 'nexus - nofile 65536' >> /etc/security/limits.conf

@@ -26,7 +26,7 @@ variable "nexus_instance_type" {
 }
 
 variable "nexus_instance_spot_price" {
-  default = "0.021"
+  default = "0.027"
 }
 
 # 172.16.10.64 - 172.16.10.127

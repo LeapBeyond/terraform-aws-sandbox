@@ -238,6 +238,14 @@ resource "aws_instance" "ssmtest" {
     Owner   = "${var.tags["owner"]}"
     Client  = "${var.tags["client"]}"
   }
+  user_data = <<EOF
+#!/bin/bash
+yum update -y
+yum erase -y ntp*
+yum -y install chrony
+echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+service chronyd start
+EOF
 }
 
 resource "aws_security_group" "test_ssh" {
@@ -259,6 +267,7 @@ resource "aws_security_group" "test_ssh" {
     cidr_blocks = "${var.ssh_inbound}"
   }
 }
+
 
 resource "aws_security_group" "test_nexus" {
   name        = "test_nexus"

@@ -20,6 +20,7 @@ data "aws_vpc" "defaultvpc" {
   cidr_block = "172.31.0.0/16"
 }
 
+// TODO: turn this into a template
 data "aws_iam_policy_document" "ec2-service-role-policy" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -222,6 +223,15 @@ resource "aws_instance" "bastion" {
       timeout     = "5m"
     }
   }
+
+  user_data = <<EOF
+#!/bin/bash
+yum update -y
+yum erase -y ntp*
+yum -y install chrony
+echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+service chronyd start
+EOF
 }
 
 resource "null_resource" "update" {
