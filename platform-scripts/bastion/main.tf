@@ -152,6 +152,19 @@ resource "aws_security_group" "bastion_ssh" {
   }
 }
 
+resource "aws_security_group" "proxy" {
+  name = "proxy"
+  description = "allows access to squid proxy"
+  vpc_id      = "${aws_vpc.bastion_vpc.id}"
+
+  ingress {
+    from_port   = 3128
+    to_port     = 3128
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_default_security_group" "bastion_default" {
   vpc_id = "${aws_vpc.bastion_vpc.id}"
 
@@ -224,29 +237,8 @@ resource "aws_instance" "bastion" {
     }
   }
 
-  user_data = <<EOF
-#!/bin/bash
-yum update -y
-yum erase -y ntp*
-yum -y install chrony
-echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
-service chronyd start
-EOF
-}
-
-resource "null_resource" "update" {
-  connection {
-    type        = "ssh"
-    agent       = false
-    user        = "${var.bastion_user}"
-    host        = "${aws_instance.bastion.public_dns}"
-    private_key = "${file("${path.root}/../data/${var.bastion_key}.pem")}"
-  }
-
   provisioner "remote-exec" {
     inline = [
-      "sudo yum update -y",
-      "sudo yum install git -y",
       "mkdir ~/.aws ~/bin && cd ~/bin && wget https://releases.hashicorp.com/terraform/0.10.7/terraform_0.10.7_linux_amd64.zip && unzip terraform*zip",
       "sudo git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.helper '!aws --profile default codecommit credential-helper $@'",
       "sudo git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.UseHttpPath true",
@@ -255,7 +247,58 @@ resource "null_resource" "update" {
       "cd ~ && git clone https://git-codecommit.${var.aws_region}.amazonaws.com/v1/repos/bastion-smoketest",
       "chmod 0400 /home/${var.bastion_user}/.ssh/${var.test_key}.pem",
     ]
+
+    connection {
+      type        = "ssh"
+      user        = "${var.bastion_user}"
+      private_key = "${file("${path.root}/../data/${var.bastion_key}.pem")}"
+    }
   }
+
+  user_data = <<EOF
+#!/bin/bash
+yum update -y
+yum erase -y ntp*
+yum -y install chrony git
+echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+service chronyd start
+EOF
+}
+
+resource "aws_instance" "proxy" {
+  ami                    = "${data.aws_ami.target_ami.id}"
+  instance_type          = "${var.bastion_instance_type}"
+  key_name               = "${var.bastion_key}"
+  subnet_id              = "${aws_subnet.bastion_subnet.id}"
+  vpc_security_group_ids = [ "${aws_security_group.bastion_ssh.id}", "${aws_security_group.proxy.id}" ]
+
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = "${var.root_vol_size}"
+  }
+
+  tags {
+    Name    = "proxy"
+    Project = "${var.tags["project"]}"
+    Owner   = "${var.tags["owner"]}"
+    Client  = "${var.tags["client"]}"
+  }
+
+  volume_tags {
+    Project = "${var.tags["project"]}"
+    Owner   = "${var.tags["owner"]}"
+    Client  = "${var.tags["client"]}"
+  }
+
+  user_data = <<EOF
+#!/bin/bash
+yum update -y
+yum erase -y ntp*
+yum -y install chrony squid
+echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+service chronyd start
+chkconfig squid on
+EOF
 }
 
 # -------------------------------   code commit repository -----------------------------

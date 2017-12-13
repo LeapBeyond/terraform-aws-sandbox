@@ -29,3 +29,11 @@ output "bastion_ssh_sg_id" {
 output "bastion_rt_id" {
   value = "${aws_route_table.bastion-rt.id}"
 }
+
+output "proxy_public_dns" {
+  value = "${aws_instance.proxy.public_dns}"
+}
+
+output "proxy_private_dns" {
+  value = "${aws_instance.proxy.private_dns}"
+}

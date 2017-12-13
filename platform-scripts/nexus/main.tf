@@ -84,22 +84,22 @@ alternatives --remove java /usr/lib/jvm/jre-1.7.0-openjdk.x86_64/bin/java
 useradd nexus
 echo 'nexus - nofile 65536' >> /etc/security/limits.conf
 cd ~nexus
-wget -q https://download.sonatype.com/nexus/3/nexus-3.6.1-02-unix.tar.gz
-tar xfz nexus-3.6.1-02-unix.tar.gz
+wget -q https://download.sonatype.com/nexus/3/nexus-3.6.2-01-unix.tar.gz
+tar xfz nexus-3.6.2-01-unix.tar.gz
 chown -R nexus:nexus ./*
-sudo -u nexus ~nexus/nexus-3.6.1-02/bin/nexus start
+sudo -u nexus ~nexus/nexus-3.6.2-01/bin/nexus start
 EOF
 }
 
-resource "null_resource" "update" {
-  connection {
-    type        = "ssh"
-    agent       = false
-    user        = "${var.nexus_user}"
-    host        = "${aws_instance.nexus.public_dns}"
-    private_key = "${file("${path.root}/../data/${var.nexus_key}.pem")}"
-  }
-}
+# resource "null_resource" "update" {
+#   connection {
+#     type        = "ssh"
+#     agent       = false
+#     user        = "${var.nexus_user}"
+#     host        = "${aws_instance.nexus.public_dns}"
+#     private_key = "${file("${path.root}/../data/${var.nexus_key}.pem")}"
+#   }
+# }
 
 resource "aws_security_group" "nexus_http" {
   name        = "nexus_http"
