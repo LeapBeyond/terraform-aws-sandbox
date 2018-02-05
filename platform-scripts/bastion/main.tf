@@ -240,13 +240,16 @@ resource "aws_instance" "bastion" {
 
   user_data = <<EOF
 #!/bin/bash
-yum update -y
-yum erase -y ntp*
-yum -y install chrony git
+yum update -y -q
+yum erase -y -q ntp*
+yum -y -q install chrony git
+
+service chronyd start
+
 git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.helper '!aws --profile default codecommit credential-helper $@'
 git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.UseHttpPath true
 
-sudo -u ${var.bastion_user} mkdir ~/.aws ~/bin
+sudo -u ${var.bastion_user} mkdir ~${var.bastion_user}/.aws ~${var.bastion_user}/bin
 sudo -u ${var.bastion_user} aws configure set region ${var.aws_region}
 sudo -u ${var.bastion_user} aws configure set output json
 cd ~${var.bastion_user}/bin
@@ -255,7 +258,5 @@ sudo -u ${var.bastion_user} unzip terraform*zip
 cd ..
 sudo -u ${var.bastion_user} git clone https://git-codecommit.${var.aws_region}.amazonaws.com/v1/repos/bastion-smoketest
 
-echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
-service chronyd start
 EOF
 }

@@ -250,10 +250,9 @@ resource "aws_instance" "ssmtest" {
 
   user_data = <<EOF
 #!/bin/bash
-yum update -y
-yum erase -y ntp*
-yum -y install chrony
-echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+yum update -y -q
+yum erase -y -q ntp*
+yum -y -q install chrony
 service chronyd start
 EOF
 }

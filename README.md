@@ -9,12 +9,8 @@ I'm also hoping that this will evolve into an exemplar of general best practices
 AWS and Terraform.
 
 ## TODO
- - getting squid.conf into place is failing as running as ec2-user
- - bastion provisioning is shite, mixing user data and remote exec is pants. same for proxy (execution of the provisioner may start before user data execution is completed.)
- - restrict ssh to proxy?
  - get secure instance yum.conf sorted out
  - weirdness remains around setting up the route table, it may be better to collapse everything into one big set of scripts rather than using modules
- - shutdown the rahookwork account and revert to personal account, to simplify billing and expenses
 
 ## Notes
 /etc/yum.conf:

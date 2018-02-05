@@ -82,7 +82,7 @@ resource "aws_instance" "proxy" {
       type        = "ssh"
       user        = "${var.proxy_user}"
       private_key = "${file("${path.root}/../data/${var.proxy_key}.pem")}"
-      timeout     = "5m"
+      timeout     = "2m"
     }
 
     content     = "${data.template_file.squid_conf.rendered}"
@@ -91,22 +91,29 @@ resource "aws_instance" "proxy" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo cp ~${var.proxy_user}/squid.conf /etc/squid/squid.conf",
-      "sudo service squid restart",
+      "until [ -f /tmp/user_data_finished ]; do sleep 1 ; done",
+      "sudo cp squid.conf /etc/squid/squid.conf",
+      "sudo service squid restart"
     ]
+
+    connection {
+      type        = "ssh"
+      user        = "${var.proxy_user}"
+      private_key = "${file("${path.root}/../data/${var.proxy_key}.pem")}"
+      timeout     = "2m"
+    }
   }
 
   user_data = <<EOF
 #!/bin/bash
-yum update -y
-yum erase -y ntp*
-yum -y install chrony squid
-echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
+yum update -y -q
+yum erase -y -q ntp*
+yum -y -q install chrony squid
 service chronyd start
 chkconfig squid on
-
-
+touch /tmp/user_data_finished
 EOF
+
 }
 
 # --------------------------------------------------------------------------------------------------------------
