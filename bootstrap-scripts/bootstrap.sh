@@ -51,3 +51,8 @@ do
   aws iam upload-ssh-public-key --user-name $ID --ssh-public-key-body "$(cat ../data/${ID}_key.pub)"
   aws iam list-ssh-public-keys --user-name $ID --output text | cut -f2,5
 done
+
+echo "======== setting up terraform back end ========"
+cd terraform
+terraform init
+terraform apply

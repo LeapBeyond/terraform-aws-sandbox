@@ -15,7 +15,7 @@ data "aws_ami" "target_ami" {
   }
 }
 
-data "aws_iam_policy_document" "ec2-service-role-policy" { 
+data "aws_iam_policy_document" "ec2-service-role-policy" {
   statement {
     actions = ["sts:AssumeRole"]
 

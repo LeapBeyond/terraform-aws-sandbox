@@ -15,10 +15,9 @@ AWS and Terraform.
    route table for the former, but they are executing in parallel, so fail out if the bastion route table does not already exist.
    - going further, the route in the bastion route table out through the peering connection gets dropped on some runs.
  - SSH to the proxy instance should only be from the bastion, not the internet
- - terraform state needs to move to S3
  - get secure instance yum.conf sorted out
  - the `data "aws_iam_policy_document" "ec2-service-role-policy"` would be clearer as a template
-
+ - access to terraform state S3 bucket and table lock could be tightened
 
 ## Notes
 /etc/yum.conf:

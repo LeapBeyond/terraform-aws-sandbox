@@ -3,6 +3,17 @@ provider "aws" {
   profile = "${var.aws_profile}"
 }
 
+resource "aws_kms_key" "state" {
+  deletion_window_in_days = 7
+
+  tags {
+    Name    = "terraform_state"
+    Project = "${var.tags["project"]}"
+    Owner   = "${var.tags["owner"]}"
+    Client  = "${var.tags["client"]}"
+  }
+}
+
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock" {
   name           = "${var.lock_table_name}"
   hash_key       = "LockID"

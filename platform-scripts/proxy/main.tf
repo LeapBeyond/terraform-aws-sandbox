@@ -93,7 +93,7 @@ resource "aws_instance" "proxy" {
     inline = [
       "until [ -f /tmp/user_data_finished ]; do sleep 1 ; done",
       "sudo cp squid.conf /etc/squid/squid.conf",
-      "sudo service squid restart"
+      "sudo service squid restart",
     ]
 
     connection {
@@ -113,7 +113,6 @@ service chronyd start
 chkconfig squid on
 touch /tmp/user_data_finished
 EOF
-
 }
 
 # --------------------------------------------------------------------------------------------------------------
