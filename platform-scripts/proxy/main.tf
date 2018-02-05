@@ -90,10 +90,10 @@ resource "aws_instance" "proxy" {
   }
 
   provisioner "remote-exec" {
-     inline = [
-       "sudo cp ~${var.proxy_user}/squid.conf /etc/squid/squid.conf",
-       "sudo service squid restart"
-     ]
+    inline = [
+      "sudo cp ~${var.proxy_user}/squid.conf /etc/squid/squid.conf",
+      "sudo service squid restart",
+    ]
   }
 
   user_data = <<EOF

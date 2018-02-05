@@ -15,11 +15,6 @@ data "aws_ami" "target_ami" {
   }
 }
 
-# TODO: move this out
-data "aws_vpc" "defaultvpc" {
-  cidr_block = "172.31.0.0/16"
-}
-
 // TODO: turn this into a template
 data "aws_iam_policy_document" "ec2-service-role-policy" {
   statement {
@@ -36,8 +31,14 @@ data "aws_iam_policy_document" "ec2-service-role-policy" {
 # lock down the default security group and NACL
 # --------------------------------------------------------------------------------------------------------------
 
+resource "aws_default_vpc" "default" {
+  tags {
+    Name = "Default VPC"
+  }
+}
+
 resource "aws_default_security_group" "default" {
-  vpc_id = "${data.aws_vpc.defaultvpc.id}"
+  vpc_id = "${aws_default_vpc.default.id}"
 
   tags {
     Name    = "default_sg"
@@ -47,8 +48,8 @@ resource "aws_default_security_group" "default" {
   }
 }
 
-resource "aws_default_network_acl" "support" {
-  default_network_acl_id = "${var.default_network_acl_id}"
+resource "aws_default_network_acl" "default" {
+  default_network_acl_id = "${aws_default_vpc.default.default_network_acl_id}"
 
   tags {
     Name    = "default_nacl"

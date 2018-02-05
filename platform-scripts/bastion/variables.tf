@@ -16,10 +16,6 @@ variable "bastion_user" {
   default = "ec2-user"
 }
 
-variable "default_network_acl_id" {
-  default = "acl-6c6a2f05"
-}
-
 variable "bastion_ami_name" {
   default = "amzn-ami-hvm-2017.09.0.20170930-x86_64-ebs"
 }
