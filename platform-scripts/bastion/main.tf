@@ -32,11 +32,6 @@ data "aws_iam_policy_document" "ec2-service-role-policy" {
   }
 }
 
-# TODO: parameterise that nacl
-variable "default_network_acl_id" {
-  default = "acl-6c6a2f05"
-}
-
 # --------------------------------------------------------------------------------------------------------------
 # lock down the default security group and NACL
 # --------------------------------------------------------------------------------------------------------------
@@ -152,19 +147,6 @@ resource "aws_security_group" "bastion_ssh" {
   }
 }
 
-resource "aws_security_group" "proxy" {
-  name = "proxy"
-  description = "allows access to squid proxy"
-  vpc_id      = "${aws_vpc.bastion_vpc.id}"
-
-  ingress {
-    from_port   = 3128
-    to_port     = 3128
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 resource "aws_default_security_group" "bastion_default" {
   vpc_id = "${aws_vpc.bastion_vpc.id}"
 
@@ -174,6 +156,12 @@ resource "aws_default_security_group" "bastion_default" {
     Owner   = "${var.tags["owner"]}"
     Client  = "${var.tags["client"]}"
   }
+}
+
+# -------------------------------   code commit repository -----------------------------
+resource "aws_codecommit_repository" "bastion-smoketest" {
+  repository_name = "bastion-smoketest"
+  description     = "smoke test scripts for the bastion."
 }
 
 # ------------------------ IAM role for bastion instance -------------------------------------------------
@@ -239,12 +227,6 @@ resource "aws_instance" "bastion" {
 
   provisioner "remote-exec" {
     inline = [
-      "mkdir ~/.aws ~/bin && cd ~/bin && wget https://releases.hashicorp.com/terraform/0.10.7/terraform_0.10.7_linux_amd64.zip && unzip terraform*zip",
-      "sudo git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.helper '!aws --profile default codecommit credential-helper $@'",
-      "sudo git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.UseHttpPath true",
-      "aws configure set region ${var.aws_region}",
-      "aws configure set output json",
-      "cd ~ && git clone https://git-codecommit.${var.aws_region}.amazonaws.com/v1/repos/bastion-smoketest",
       "chmod 0400 /home/${var.bastion_user}/.ssh/${var.test_key}.pem",
     ]
 
@@ -260,50 +242,19 @@ resource "aws_instance" "bastion" {
 yum update -y
 yum erase -y ntp*
 yum -y install chrony git
+git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.helper '!aws --profile default codecommit credential-helper $@'
+git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.UseHttpPath true
+
+sudo -u ${var.bastion_user} mkdir ~/.aws ~/bin
+sudo -u ${var.bastion_user} aws configure set region ${var.aws_region}
+sudo -u ${var.bastion_user} aws configure set output json
+cd ~${var.bastion_user}/bin
+sudo -u ${var.bastion_user} wget https://releases.hashicorp.com/terraform/0.10.7/terraform_0.10.7_linux_amd64.zip
+sudo -u ${var.bastion_user} unzip terraform*zip
+cd ..
+sudo -u ${var.bastion_user} git clone https://git-codecommit.${var.aws_region}.amazonaws.com/v1/repos/bastion-smoketest
+
 echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
 service chronyd start
 EOF
-}
-
-resource "aws_instance" "proxy" {
-  ami                    = "${data.aws_ami.target_ami.id}"
-  instance_type          = "${var.bastion_instance_type}"
-  key_name               = "${var.bastion_key}"
-  subnet_id              = "${aws_subnet.bastion_subnet.id}"
-  vpc_security_group_ids = [ "${aws_security_group.bastion_ssh.id}", "${aws_security_group.proxy.id}" ]
-
-  root_block_device = {
-    volume_type = "gp2"
-    volume_size = "${var.root_vol_size}"
-  }
-
-  tags {
-    Name    = "proxy"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-
-  volume_tags {
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-
-  user_data = <<EOF
-#!/bin/bash
-yum update -y
-yum erase -y ntp*
-yum -y install chrony squid
-echo "server 169.254.169.123 prefer iburst" >> /etc/chrony.conf
-service chronyd start
-chkconfig squid on
-EOF
-}
-
-# -------------------------------   code commit repository -----------------------------
-# TODO probably drop this or move elsewhere.
-resource "aws_codecommit_repository" "bastion-smoketest" {
-  repository_name = "bastion-smoketest"
-  description     = "smoke test scripts for the bastion."
 }

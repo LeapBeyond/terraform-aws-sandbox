@@ -29,10 +29,6 @@ data "aws_subnet" "bastion_subnet" {
   id = "${var.bastion_subnet_id}"
 }
 
-# data "aws_subnet" "nexus_subnet" {
-#   id = "${var.nexus_subnet_id}"
-# }
-
 # --------------------------------------------------------------------------------------------------------------
 # VPC definition
 # --------------------------------------------------------------------------------------------------------------
@@ -149,27 +145,27 @@ resource "aws_network_acl_rule" "test_ephemeral_from_bastion" {
   to_port        = 65535
 }
 
-# resource "aws_network_acl_rule" "test_http_from_nexus" {
-#   network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-#   rule_number    = 110
-#   egress         = false
-#   protocol       = "tcp"
-#   rule_action    = "allow"
-#   cidr_block     = "${data.aws_subnet.nexus_subnet.cidr_block}"
-#   from_port      = 1024
-#   to_port        = 65535
-# }
-#
-# resource "aws_network_acl_rule" "test_http_to_nexus" {
-#   network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-#   rule_number    = 110
-#   egress         = true
-#   protocol       = "tcp"
-#   rule_action    = "allow"
-#   cidr_block     = "${data.aws_subnet.nexus_subnet.cidr_block}"
-#   from_port      = 8081
-#   to_port        = 8081
-# }
+resource "aws_network_acl_rule" "test_ephemeral_from_proxy" {
+  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
+  rule_number    = 200
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "${var.proxy_subnet_cidr}"
+  from_port      = 1024
+  to_port        = 65535
+}
+
+resource "aws_network_acl_rule" "test_to_proxy" {
+  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
+  rule_number    = 200
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "${var.proxy_subnet_cidr}"
+  from_port      = 3128
+  to_port        = 3128
+}
 
 # --------------------------------------------------------------------------------------------------------------
 # subnets within the VPC
@@ -291,33 +287,13 @@ resource "aws_security_group" "test_proxy" {
     from_port   = 1024
     to_port     = 65535
     protocol    = "tcp"
-    cidr_blocks = ["${data.aws_subnet.bastion_subnet.cidr_block}"]
+    cidr_blocks = ["${var.proxy_subnet_cidr}"]
   }
 
   egress {
     from_port   = 3128
     to_port     = 3128
     protocol    = "tcp"
-    cidr_blocks = ["${data.aws_subnet.bastion_subnet.cidr_block}"]
+    cidr_blocks = ["${var.proxy_subnet_cidr}"]
   }
 }
-
-# resource "aws_security_group" "test_nexus" {
-#   name        = "test_nexus"
-#   description = "allows access to and from nexus"
-#   vpc_id      = "${aws_vpc.test_vpc.id}"
-#
-#   ingress {
-#     from_port   = 1024
-#     to_port     = 65535
-#     protocol    = "tcp"
-#     cidr_blocks = ["${data.aws_subnet.nexus_subnet.cidr_block}"]
-#   }
-#
-#   egress {
-#     from_port   = 8081
-#     to_port     = 8081
-#     protocol    = "tcp"
-#     cidr_blocks = ["${data.aws_subnet.nexus_subnet.cidr_block}"]
-#   }
-# }

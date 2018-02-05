@@ -1,5 +1,6 @@
 aws_region="eu-west-2"
 aws_profile="rahook_admin_cli"
 aws_account_id="568794283665"
-bastion_key="rahook_bastion"
+proxy_key="rahook_proxy"
 test_key="rahook_test"
+bastion_key="rahook_bastion"
