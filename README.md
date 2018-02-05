@@ -8,9 +8,17 @@ consider forking it.
 I'm also hoping that this will evolve into an exemplar of general best practices and common conventions around using
 AWS and Terraform.
 
-## TODO
+
+## todo
+ - SSM per <https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-patch-walkthrough.html>
+ - currently there's a dependency problem between the bastion and securevpc modules. the latter wants to look up the
+   route table for the former, but they are executing in parallel, so fail out if the bastion route table does not already exist.
+   - going further, the route in the bastion route table out through the peering connection gets dropped on some runs.
+ - SSH to the proxy instance should only be from the bastion, not the internet
+ - terraform state needs to move to S3
  - get secure instance yum.conf sorted out
- - weirdness remains around setting up the route table, it may be better to collapse everything into one big set of scripts rather than using modules
+ - the `data "aws_iam_policy_document" "ec2-service-role-policy"` would be clearer as a template
+
 
 ## Notes
 /etc/yum.conf:

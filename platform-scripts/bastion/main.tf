@@ -15,8 +15,7 @@ data "aws_ami" "target_ami" {
   }
 }
 
-// TODO: turn this into a template
-data "aws_iam_policy_document" "ec2-service-role-policy" {
+data "aws_iam_policy_document" "ec2-service-role-policy" { 
   statement {
     actions = ["sts:AssumeRole"]
 
