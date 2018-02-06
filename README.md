@@ -79,6 +79,15 @@ acl localnet src ${secure_subnet} - 172.17.10.0/24
 
 
 ================================
-proxy - remove ability to ssh to it
-    - add /etc/squid/squid.conf
-    - update yum.conf
+[main]
+cachedir=/var/cache/yum/$basearch/$releasever
+keepcache=0
+debuglevel=2
+logfile=/var/log/yum.log
+exactarch=1
+obsoletes=1
+gpgcheck=1
+plugins=1
+installonly_limit=3
+metadata_expire=90m
+proxy=http://????:3128

@@ -25,6 +25,7 @@ module "securevpc" {
   test_vpc_cidr     = "${var.test_vpc_cidr}"
   test_subnet_cidr  = "${var.test_subnet_cidr}"
   proxy_subnet_cidr = "${var.proxy_subnet_cidr}"
+  proxy_address     = "${module.proxy.proxy_private_dns}"
   test_key          = "${var.test_key}"
 }
 

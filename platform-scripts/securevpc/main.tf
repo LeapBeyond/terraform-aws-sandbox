@@ -29,6 +29,14 @@ data "aws_subnet" "bastion_subnet" {
   id = "${var.bastion_subnet_id}"
 }
 
+data "template_file" "user_data" {
+  template = "${file("${path.module}/templates/user_data.sh.tpl")}"
+
+  vars {
+    proxy_address = "${var.proxy_address}"
+  }
+}
+
 # --------------------------------------------------------------------------------------------------------------
 # VPC definition
 # --------------------------------------------------------------------------------------------------------------
@@ -248,13 +256,7 @@ resource "aws_instance" "ssmtest" {
     Client  = "${var.tags["client"]}"
   }
 
-  user_data = <<EOF
-#!/bin/bash
-yum update -y -q
-yum erase -y -q ntp*
-yum -y -q install chrony
-service chronyd start
-EOF
+  user_data = "${data.template_file.user_data.rendered}"
 }
 
 resource "aws_security_group" "test_ssh" {

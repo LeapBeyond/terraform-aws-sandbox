@@ -12,6 +12,7 @@ variable "bastion_subnet_id" {}
 variable "test_vpc_cidr" {}
 variable "test_subnet_cidr" {}
 variable "proxy_subnet_cidr" {}
+variable "proxy_address" {}
 
 # variable "nexus_subnet_id" {}
 variable "test_key" {}
