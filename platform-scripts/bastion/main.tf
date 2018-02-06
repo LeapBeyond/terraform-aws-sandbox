@@ -15,17 +15,6 @@ data "aws_ami" "target_ami" {
   }
 }
 
-data "aws_iam_policy_document" "ec2-service-role-policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
 # --------------------------------------------------------------------------------------------------------------
 # lock down the default security group and NACL
 # --------------------------------------------------------------------------------------------------------------
@@ -169,9 +158,9 @@ resource "aws_codecommit_repository" "bastion-smoketest" {
 resource "aws_iam_role" "bastion_role" {
   name_prefix           = "bastion"
   path                  = "/"
-  description           = "roles polices the bastion can use"
+  description           = "roles policy the bastion uses"
   force_detach_policies = true
-  assume_role_policy    = "${data.aws_iam_policy_document.ec2-service-role-policy.json}"
+  assume_role_policy    = "${file("${path.module}/templates/ec2-service-role-policy.json")}"
 }
 
 resource "aws_iam_role_policy_attachment" "bastion-role-codecommit" {
