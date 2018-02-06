@@ -7,3 +7,8 @@ consider forking it.
 
 I'm also hoping that this will evolve into an exemplar of general best practices and common conventions around using
 AWS and Terraform.
+
+## To use
+First modify and execute the `bootstrap-scripts` to get the base accounts, groups, keys and S3 backend sorted out.
+
+Second setup `terraform.tfvars` for the `platform-scripts`, then do appropriate `terraform init` & `terraform apply` to get it all up and running.

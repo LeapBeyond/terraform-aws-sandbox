@@ -10,6 +10,7 @@ It is assumed that:
 ## Sets up
  - IAM groups and users
  - initial key pairs.
+ - S3/Dynamodb storage for holding Terraform state for main platform scripts.
 
 ## To use
 Copy the `env.rc.template` to `env.rc` and fill in the blanks. Be careful not to commit the actual `env.rc` to git!
