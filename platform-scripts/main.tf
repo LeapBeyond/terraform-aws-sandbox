@@ -9,6 +9,8 @@ module "network" {
   bastion_vpc_cidr    = "${var.bastion_vpc_cidr}"
   bastion_subnet_cidr = "${var.bastion_subnet_cidr}"
   proxy_subnet_cidr   = "${var.proxy_subnet_cidr}"
+  test_vpc_cidr       = "${var.test_vpc_cidr}"
+  test_subnet_cidr    = "${var.test_subnet_cidr}"
 }
 
 module "bastion" {
@@ -40,6 +42,8 @@ module "proxy" {
 module "securevpc" {
   source            = "./securevpc"
   tags              = "${var.tags}"
+  vpc_id            = "${module.network.test_vpc_id}"
+  subnet_id         = "${module.network.test_subnet_id}"
   ssh_inbound       = ["${var.bastion_subnet_cidr}"]
   bastion_vpc_id    = "${module.network.bastion_vpc_id}"
   bastion_subnet_id = "${module.network.bastion_subnet_id}"

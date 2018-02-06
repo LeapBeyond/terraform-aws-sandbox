@@ -21,190 +21,11 @@ data "aws_iam_policy_document" "ssm-service-role-policy" {
   }
 }
 
-data "aws_vpc" "bastion_vpc" {
-  id = "${var.bastion_vpc_id}"
-}
-
-data "aws_subnet" "bastion_subnet" {
-  id = "${var.bastion_subnet_id}"
-}
-
 data "template_file" "user_data" {
   template = "${file("${path.module}/templates/user_data.sh.tpl")}"
 
   vars {
     proxy_address = "${var.proxy_address}"
-  }
-}
-
-# --------------------------------------------------------------------------------------------------------------
-# VPC definition
-# --------------------------------------------------------------------------------------------------------------
-resource "aws_vpc" "test_vpc" {
-  cidr_block           = "${var.test_vpc_cidr}"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-
-  tags {
-    Name    = "test-vpc"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_route_table" "test-rt" {
-  vpc_id = "${aws_vpc.test_vpc.id}"
-
-  tags {
-    Name    = "test-rt"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_vpc_peering_connection" "bastion_to_test" {
-  vpc_id      = "${data.aws_vpc.bastion_vpc.id}"
-  peer_vpc_id = "${aws_vpc.test_vpc.id}"
-  auto_accept = true
-
-  accepter {
-    allow_remote_vpc_dns_resolution = true
-  }
-
-  requester {
-    allow_remote_vpc_dns_resolution = true
-  }
-
-  tags {
-    Name    = "bastion_to_test"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_route" "test_to_bastion" {
-  route_table_id            = "${aws_route_table.test-rt.id}"
-  destination_cidr_block    = "${data.aws_vpc.bastion_vpc.cidr_block}"
-  vpc_peering_connection_id = "${aws_vpc_peering_connection.bastion_to_test.id}"
-}
-
-resource "aws_route" "bastion_to_test" {
-  route_table_id            = "${var.bastion_rt_id}"
-  destination_cidr_block    = "${var.test_vpc_cidr}"
-  vpc_peering_connection_id = "${aws_vpc_peering_connection.bastion_to_test.id}"
-}
-
-resource "aws_default_network_acl" "test_nacl" {
-  default_network_acl_id = "${aws_vpc.test_vpc.default_network_acl_id}"
-
-  tags {
-    Name    = "test_default"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_network_acl" "test_nacl_main" {
-  vpc_id     = "${aws_vpc.test_vpc.id}"
-  subnet_ids = ["${aws_subnet.test_subnet.id}"]
-
-  tags {
-    Name    = "test_main"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_network_acl_rule" "test_ephemeral_to_bastion" {
-  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-  rule_number    = 100
-  egress         = true
-  protocol       = "tcp"
-  rule_action    = "allow"
-  cidr_block     = "${data.aws_subnet.bastion_subnet.cidr_block}"
-  from_port      = 1024
-  to_port        = 65535
-}
-
-resource "aws_network_acl_rule" "test_ssh_from_bastion" {
-  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-  rule_number    = 100
-  egress         = false
-  protocol       = "tcp"
-  rule_action    = "allow"
-  cidr_block     = "${data.aws_subnet.bastion_subnet.cidr_block}"
-  from_port      = 22
-  to_port        = 22
-}
-
-resource "aws_network_acl_rule" "test_ephemeral_from_bastion" {
-  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-  rule_number    = 150
-  egress         = false
-  protocol       = "tcp"
-  rule_action    = "allow"
-  cidr_block     = "${data.aws_subnet.bastion_subnet.cidr_block}"
-  from_port      = 1024
-  to_port        = 65535
-}
-
-resource "aws_network_acl_rule" "test_ephemeral_from_proxy" {
-  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-  rule_number    = 200
-  egress         = false
-  protocol       = "tcp"
-  rule_action    = "allow"
-  cidr_block     = "${var.proxy_subnet_cidr}"
-  from_port      = 1024
-  to_port        = 65535
-}
-
-resource "aws_network_acl_rule" "test_to_proxy" {
-  network_acl_id = "${aws_network_acl.test_nacl_main.id}"
-  rule_number    = 200
-  egress         = true
-  protocol       = "tcp"
-  rule_action    = "allow"
-  cidr_block     = "${var.proxy_subnet_cidr}"
-  from_port      = 3128
-  to_port        = 3128
-}
-
-# --------------------------------------------------------------------------------------------------------------
-# subnets within the VPC
-# --------------------------------------------------------------------------------------------------------------
-
-resource "aws_subnet" "test_subnet" {
-  vpc_id                  = "${aws_vpc.test_vpc.id}"
-  cidr_block              = "${var.test_subnet_cidr}"
-  map_public_ip_on_launch = true
-
-  tags {
-    Name    = "test-subnet"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_route_table_association" "test-rta" {
-  subnet_id      = "${aws_subnet.test_subnet.id}"
-  route_table_id = "${aws_route_table.test-rt.id}"
-}
-
-resource "aws_default_security_group" "default" {
-  vpc_id = "${aws_vpc.test_vpc.id}"
-
-  tags {
-    Name    = "test_default"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
   }
 }
 
@@ -232,9 +53,8 @@ resource "aws_instance" "ssmtest" {
   ami                         = "${data.aws_ami.target_ami.id}"
   instance_type               = "${var.ec2_instance_type}"
   key_name                    = "${var.test_key}"
-  subnet_id                   = "${aws_subnet.test_subnet.id}"
+  subnet_id                   = "${var.subnet_id}"
 
-  # vpc_security_group_ids      = ["${aws_security_group.test_ssh.id}", "${aws_security_group.test_nexus.id}"]
   vpc_security_group_ids = ["${aws_security_group.test_ssh.id}", "${aws_security_group.test_proxy.id}"]
   iam_instance_profile   = "${aws_iam_instance_profile.test_ssm_profile.name}"
 
@@ -262,7 +82,7 @@ resource "aws_instance" "ssmtest" {
 resource "aws_security_group" "test_ssh" {
   name        = "test_ssh"
   description = "allows ssh access to test"
-  vpc_id      = "${aws_vpc.test_vpc.id}"
+  vpc_id      = "${var.vpc_id}"
 
   ingress {
     from_port   = 22
@@ -282,7 +102,7 @@ resource "aws_security_group" "test_ssh" {
 resource "aws_security_group" "test_proxy" {
   name        = "test_proxy"
   description = "allows access to yum proxy"
-  vpc_id      = "${aws_vpc.test_vpc.id}"
+  vpc_id      = "${var.vpc_id}"
 
   ingress {
     from_port   = 1024
