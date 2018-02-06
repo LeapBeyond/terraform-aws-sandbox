@@ -36,7 +36,7 @@ resource "aws_security_group" "proxy_ssh" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = "${var.ssh_inbound}"
+    cidr_blocks = ["${var.ssh_inbound}"]
   }
 
   # ToDo this could be finessed to just 443 for the target aws environments

@@ -15,12 +15,6 @@ data "aws_ami" "target_ami" {
   }
 }
 
-# -------------------------------   code commit repository -----------------------------
-resource "aws_codecommit_repository" "bastion-smoketest" {
-  repository_name = "bastion-smoketest"
-  description     = "smoke test scripts for the bastion."
-}
-
 # ------------------------ security groups --------------------------------------------------------
 
 resource "aws_security_group" "bastion_ssh" {
@@ -32,7 +26,7 @@ resource "aws_security_group" "bastion_ssh" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = "${var.bastion_ssh_inbound}"
+    cidr_blocks = "${var.ssh_inbound}"
   }
 
   egress {
@@ -41,26 +35,6 @@ resource "aws_security_group" "bastion_ssh" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-# ------------------------ IAM role for bastion instance -------------------------------------------------
-
-resource "aws_iam_role" "bastion_role" {
-  name_prefix           = "bastion"
-  path                  = "/"
-  description           = "roles policy the bastion uses"
-  force_detach_policies = true
-  assume_role_policy    = "${file("${path.module}/templates/ec2-service-role-policy.json")}"
-}
-
-resource "aws_iam_role_policy_attachment" "bastion-role-codecommit" {
-  role       = "${aws_iam_role.bastion_role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeCommitReadOnly"
-}
-
-resource "aws_iam_instance_profile" "bastion_profile" {
-  name_prefix = "bastion"
-  role        = "${aws_iam_role.bastion_role.name}"
 }
 
 # ------------------------ Bastion Instance --------------------------------------------------------
@@ -72,7 +46,7 @@ resource "aws_instance" "bastion" {
   subnet_id              = "${var.subnet_id}"
   vpc_security_group_ids = ["${aws_security_group.bastion_ssh.id}"]
 
-  iam_instance_profile = "${aws_iam_instance_profile.bastion_profile.name}"
+  iam_instance_profile = "${var.profile_name}"
 
   root_block_device = {
     volume_type = "gp2"

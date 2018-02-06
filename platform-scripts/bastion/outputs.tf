@@ -9,7 +9,3 @@ output "bastion_private_dns" {
 output "connect_string" {
   value = "ssh -i ${var.bastion_key}.pem ${var.bastion_user}@${aws_instance.bastion.public_dns}"
 }
-
-output "bastion_ssh_sg_id" {
-  value = "${aws_security_group.bastion_ssh.id}"
-}

@@ -1,4 +1,6 @@
-/* variables to inject */
+variable "subnet_id" {}
+variable "vpc_id" {}
+
 variable "ssh_inbound" {
   type = "list"
 }
@@ -7,19 +9,10 @@ variable "tags" {
   type = "map"
 }
 
-variable "vpc_id" {}
-variable "bastion_vpc_id" {}
-variable "bastion_subnet_id" {}
-variable "test_vpc_cidr" {}
-variable "test_subnet_cidr" {}
 variable "proxy_subnet_cidr" {}
 variable "proxy_address" {}
-variable "subnet_id" {}
-
-# variable "nexus_subnet_id" {}
 variable "test_key" {}
-
-variable "bastion_rt_id" {}
+variable "profile_name" {}
 
 /* locally defined */
 variable "ec2_user" {

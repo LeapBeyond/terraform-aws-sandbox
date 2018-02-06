@@ -1,17 +1,19 @@
-variable "aws_region" {}
-variable "bastion_key" {}
-variable "test_key" {}
-variable "proxy_key" {}
 variable "subnet_id" {}
 variable "vpc_id" {}
 
-variable "bastion_ssh_inbound" {
+variable "ssh_inbound" {
   type = "list"
 }
 
 variable "tags" {
   type = "map"
 }
+
+variable "bastion_key" {}
+variable "test_key" {}
+variable "proxy_key" {}
+variable "aws_region" {}
+variable "profile_name" {}
 
 variable "bastion_user" {
   default = "ec2-user"
