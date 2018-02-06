@@ -23,7 +23,7 @@ module "bastion" {
   tags         = "${var.tags}"
   vpc_id       = "${module.network.bastion_vpc_id}"
   subnet_id    = "${module.network.bastion_subnet_id}"
-  ssh_inbound  = "${module.network.bastion_inbound}"
+  ssh_inbound  = ["${module.network.bastion_inbound}"]
   profile_name = "${module.security.bastion_profile_name}"
   aws_region   = "${var.aws_region}"
   bastion_key  = "${var.bastion_key}"
