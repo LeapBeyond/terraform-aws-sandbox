@@ -15,103 +15,10 @@ data "aws_ami" "target_ami" {
   }
 }
 
-# --------------------------------------------------------------------------------------------------------------
-# lock down the default security group and NACL
-# --------------------------------------------------------------------------------------------------------------
-
-resource "aws_default_vpc" "default" {
-  tags {
-    Name = "Default VPC"
-  }
-}
-
-resource "aws_default_security_group" "default" {
-  vpc_id = "${aws_default_vpc.default.id}"
-
-  tags {
-    Name    = "default_sg"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_default_network_acl" "default" {
-  default_network_acl_id = "${aws_default_vpc.default.default_network_acl_id}"
-
-  tags {
-    Name    = "default_nacl"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-# --------------------------------------------------------------------------------------------------------------
-# define the bastion VPC
-# --------------------------------------------------------------------------------------------------------------
-
-resource "aws_vpc" "bastion_vpc" {
-  cidr_block           = "${var.bastion_vpc_cidr}"
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-
-  tags {
-    Name    = "Bastion-vpc"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_internet_gateway" "bastion-gateway" {
-  vpc_id = "${aws_vpc.bastion_vpc.id}"
-
-  tags {
-    Name    = "Bastion-gateway"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-# --------------------------------------------------------------------------------------------------------------
-# define the bastion subnet
-# --------------------------------------------------------------------------------------------------------------
-
-resource "aws_subnet" "bastion_subnet" {
-  vpc_id                  = "${aws_vpc.bastion_vpc.id}"
-  cidr_block              = "${var.bastion_subnet_cidr}"
-  map_public_ip_on_launch = true
-
-  tags {
-    Name    = "Bastion-subnet"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-# ------------------------ route table associated with the subnet ----------------------------
-resource "aws_route_table" "bastion-rt" {
-  vpc_id = "${aws_vpc.bastion_vpc.id}"
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.bastion-gateway.id}"
-  }
-
-  tags {
-    Name    = "Bastion-rt"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-resource "aws_route_table_association" "bastion-rta" {
-  subnet_id      = "${aws_subnet.bastion_subnet.id}"
-  route_table_id = "${aws_route_table.bastion-rt.id}"
+# -------------------------------   code commit repository -----------------------------
+resource "aws_codecommit_repository" "bastion-smoketest" {
+  repository_name = "bastion-smoketest"
+  description     = "smoke test scripts for the bastion."
 }
 
 # ------------------------ security groups --------------------------------------------------------
@@ -119,7 +26,7 @@ resource "aws_route_table_association" "bastion-rta" {
 resource "aws_security_group" "bastion_ssh" {
   name        = "bastion_ssh"
   description = "allows ssh access to bastion"
-  vpc_id      = "${aws_vpc.bastion_vpc.id}"
+  vpc_id      = "${var.vpc_id}"
 
   ingress {
     from_port   = 22
@@ -134,23 +41,6 @@ resource "aws_security_group" "bastion_ssh" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-}
-
-resource "aws_default_security_group" "bastion_default" {
-  vpc_id = "${aws_vpc.bastion_vpc.id}"
-
-  tags {
-    Name    = "bastion_default"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
-  }
-}
-
-# -------------------------------   code commit repository -----------------------------
-resource "aws_codecommit_repository" "bastion-smoketest" {
-  repository_name = "bastion-smoketest"
-  description     = "smoke test scripts for the bastion."
 }
 
 # ------------------------ IAM role for bastion instance -------------------------------------------------
@@ -179,7 +69,7 @@ resource "aws_instance" "bastion" {
   ami                    = "${data.aws_ami.target_ami.id}"
   instance_type          = "${var.bastion_instance_type}"
   key_name               = "${var.bastion_key}"
-  subnet_id              = "${aws_subnet.bastion_subnet.id}"
+  subnet_id              = "${var.subnet_id}"
   vpc_security_group_ids = ["${aws_security_group.bastion_ssh.id}"]
 
   iam_instance_profile = "${aws_iam_instance_profile.bastion_profile.name}"

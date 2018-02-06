@@ -1,10 +1,11 @@
-variable "bastion_vpc_id" {}
+variable "vpc_id" {}
 variable "bastion_rt_id" {}
 variable "proxy_key" {}
 variable "test_vpc_cidr" {}
 variable "proxy_subnet_cidr" {}
 variable "test_subnet_cidr" {}
 variable "bastion_subnet_cidr" {}
+variable "subnet_id" {}
 
 variable "ssh_inbound" {
   type = "list"

@@ -15,10 +15,6 @@ data "aws_ami" "target_ami" {
   }
 }
 
-data "aws_vpc" "bastion_vpc" {
-  id = "${var.bastion_vpc_id}"
-}
-
 data "template_file" "user_data" {
   template = "${file("${path.module}/templates/user_data.sh.tpl")}"
 
@@ -29,24 +25,40 @@ data "template_file" "user_data" {
 }
 
 # --------------------------------------------------------------------------------------------------------------
-# define the proxy subnet
+# security groups
 # --------------------------------------------------------------------------------------------------------------
-resource "aws_subnet" "proxy_subnet" {
-  vpc_id                  = "${var.bastion_vpc_id}"
-  cidr_block              = "${var.proxy_subnet_cidr}"
-  map_public_ip_on_launch = true
+resource "aws_security_group" "proxy_ssh" {
+  name        = "proxy_ssh"
+  description = "allows ssh access to proxy"
+  vpc_id      = "${var.vpc_id}"
 
-  tags {
-    Name    = "proxy-subnet"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = "${var.ssh_inbound}"
+  }
+
+  # ToDo this could be finessed to just 443 for the target aws environments
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-resource "aws_route_table_association" "proxy_rta" {
-  subnet_id      = "${aws_subnet.proxy_subnet.id}"
-  route_table_id = "${var.bastion_rt_id}"
+resource "aws_security_group" "proxy" {
+  name        = "proxy"
+  description = "allows access to squid proxy"
+  vpc_id      = "${var.vpc_id}"
+
+  ingress {
+    from_port   = 3128
+    to_port     = 3128
+    protocol    = "tcp"
+    cidr_blocks = ["${var.test_vpc_cidr}"]
+  }
 }
 
 # --------------------------------------------------------------------------------------------------------------
@@ -57,7 +69,7 @@ resource "aws_instance" "proxy" {
   ami                    = "${data.aws_ami.target_ami.id}"
   instance_type          = "${var.proxy_instance_type}"
   key_name               = "${var.proxy_key}"
-  subnet_id              = "${aws_subnet.proxy_subnet.id}"
+  subnet_id              = "${var.subnet_id}"
   vpc_security_group_ids = ["${aws_security_group.proxy.id}", "${aws_security_group.proxy_ssh.id}"]
 
   root_block_device = {
@@ -79,41 +91,4 @@ resource "aws_instance" "proxy" {
   }
 
   user_data = "${data.template_file.user_data.rendered}"
-}
-
-# --------------------------------------------------------------------------------------------------------------
-# security groups
-# --------------------------------------------------------------------------------------------------------------
-resource "aws_security_group" "proxy_ssh" {
-  name        = "proxy_ssh"
-  description = "allows ssh access to proxy"
-  vpc_id      = "${data.aws_vpc.bastion_vpc.id}"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = "${var.ssh_inbound}"
-  }
-
-  # ToDo this could be finessed to just 443 for the target aws environments
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "proxy" {
-  name        = "proxy"
-  description = "allows access to squid proxy"
-  vpc_id      = "${data.aws_vpc.bastion_vpc.id}"
-
-  ingress {
-    from_port   = 3128
-    to_port     = 3128
-    protocol    = "tcp"
-    cidr_blocks = ["${var.test_vpc_cidr}"]
-  }
 }
