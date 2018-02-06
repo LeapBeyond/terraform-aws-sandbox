@@ -1,3 +1,12 @@
+#!/bin/bash
+
+yum update -y -q
+yum erase -y -q ntp*
+yum -y -q install chrony squid
+service chronyd start
+chkconfig squid on
+
+cat <<EOF > /etc/squid/squid.conf
 acl localnet src ${bastion_subnet}
 acl localnet src ${secure_subnet}
 acl SSL_ports port 443
@@ -16,3 +25,6 @@ http_access deny all
 http_port 3128
 coredump_dir /var/spool/squid
 refresh_pattern . 0 20% 4320
+EOF
+
+service squid restart

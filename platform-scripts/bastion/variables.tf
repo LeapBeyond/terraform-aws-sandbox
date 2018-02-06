@@ -1,6 +1,7 @@
 variable "aws_region" {}
 variable "bastion_key" {}
 variable "test_key" {}
+variable "proxy_key" {}
 variable "bastion_vpc_cidr" {}
 variable "bastion_subnet_cidr" {}
 

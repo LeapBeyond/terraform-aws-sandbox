@@ -225,9 +225,22 @@ resource "aws_instance" "bastion" {
     }
   }
 
+  provisioner "file" {
+    source      = "${path.root}/../data/${var.proxy_key}.pem"
+    destination = "/home/${var.bastion_user}/.ssh/${var.proxy_key}.pem"
+
+    connection {
+      type        = "ssh"
+      user        = "${var.bastion_user}"
+      private_key = "${file("${path.root}/../data/${var.bastion_key}.pem")}"
+      timeout     = "5m"
+    }
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod 0400 /home/${var.bastion_user}/.ssh/${var.test_key}.pem",
+      "chmod 0400 /home/${var.bastion_user}/.ssh/${var.proxy_key}.pem",
     ]
 
     connection {

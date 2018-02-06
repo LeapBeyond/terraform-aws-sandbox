@@ -19,8 +19,8 @@ data "aws_vpc" "bastion_vpc" {
   id = "${var.bastion_vpc_id}"
 }
 
-data "template_file" "squid_conf" {
-  template = "${file("${path.module}/templates/squid.conf.tpl")}"
+data "template_file" "user_data" {
+  template = "${file("${path.module}/templates/user_data.sh.tpl")}"
 
   vars {
     bastion_subnet = "${var.bastion_subnet_cidr}"
@@ -52,6 +52,7 @@ resource "aws_route_table_association" "proxy_rta" {
 # --------------------------------------------------------------------------------------------------------------
 # the EC2 instance
 # --------------------------------------------------------------------------------------------------------------
+
 resource "aws_instance" "proxy" {
   ami                    = "${data.aws_ami.target_ami.id}"
   instance_type          = "${var.proxy_instance_type}"
@@ -77,42 +78,7 @@ resource "aws_instance" "proxy" {
     Client  = "${var.tags["client"]}"
   }
 
-  provisioner "file" {
-    connection {
-      type        = "ssh"
-      user        = "${var.proxy_user}"
-      private_key = "${file("${path.root}/../data/${var.proxy_key}.pem")}"
-      timeout     = "2m"
-    }
-
-    content     = "${data.template_file.squid_conf.rendered}"
-    destination = "~${var.proxy_user}/squid.conf"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "until [ -f /tmp/user_data_finished ]; do sleep 1 ; done",
-      "sudo cp squid.conf /etc/squid/squid.conf",
-      "sudo service squid restart",
-    ]
-
-    connection {
-      type        = "ssh"
-      user        = "${var.proxy_user}"
-      private_key = "${file("${path.root}/../data/${var.proxy_key}.pem")}"
-      timeout     = "2m"
-    }
-  }
-
-  user_data = <<EOF
-#!/bin/bash
-yum update -y -q
-yum erase -y -q ntp*
-yum -y -q install chrony squid
-service chronyd start
-chkconfig squid on
-touch /tmp/user_data_finished
-EOF
+  user_data = "${data.template_file.user_data.rendered}"
 }
 
 # --------------------------------------------------------------------------------------------------------------

@@ -10,7 +10,7 @@ variable "tags" {
 
 variable "bastion_inbound" {
   type    = "list"
-  default = ["94.101.220.0/24"]
+  default = ["94.101.220.0/24", "46.68.8.0/24"]
 }
 
 # 172.16.0.0 - 172.16.255.255
