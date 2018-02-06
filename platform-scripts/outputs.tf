@@ -11,7 +11,7 @@ output "bastion_connect_string" {
 }
 
 output "ssmtest_private_dns" {
-  value = "${module.securevpc.ssmtest_private_dns}"
+  value = "${module.ssmtest.ssmtest_private_dns}"
 }
 
 output "proxy_public_dns" {

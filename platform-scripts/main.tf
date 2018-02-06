@@ -19,7 +19,7 @@ module "security" {
 }
 
 module "bastion" {
-  source       = "./bastion"
+  source       = "./instances/bastion"
   tags         = "${var.tags}"
   vpc_id       = "${module.network.bastion_vpc_id}"
   subnet_id    = "${module.network.bastion_subnet_id}"
@@ -32,7 +32,7 @@ module "bastion" {
 }
 
 module "proxy" {
-  source              = "./proxy"
+  source              = "./instances/proxy"
   tags                = "${var.tags}"
   vpc_id              = "${module.network.bastion_vpc_id}"
   subnet_id           = "${module.network.proxy_subnet_id}"
@@ -43,8 +43,8 @@ module "proxy" {
   proxy_key           = "${var.proxy_key}"
 }
 
-module "securevpc" {
-  source            = "./securevpc"
+module "ssmtest" {
+  source            = "./instances/ssmtest"
   tags              = "${var.tags}"
   vpc_id            = "${module.network.test_vpc_id}"
   subnet_id         = "${module.network.test_subnet_id}"
