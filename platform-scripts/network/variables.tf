@@ -2,11 +2,9 @@ variable "tags" {
   type = "map"
 }
 
-# 94.101.220.0/24 - NZ guest network
-
 variable "bastion_inbound" {
   type    = "list"
-  default = ["94.101.220.0/24", "46.68.8.0/24"]
+  default = ["94.101.220.0/24", "46.68.8.0/24", "80.71.142.0/24"]
 }
 
 # 172.16.0.0 - 172.16.255.255
