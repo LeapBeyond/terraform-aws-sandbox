@@ -15,3 +15,7 @@ variable "aws_region" {}
 variable "proxy_key" {}
 variable "test_key" {}
 variable "bastion_key" {}
+
+variable "ssh_inbound" {
+  type = "list"
+}

@@ -2,10 +2,6 @@ output "bastion_vpc_id" {
   value = "${aws_vpc.bastion_vpc.id}"
 }
 
-output "bastion_inbound" {
-  value = "${var.bastion_inbound}"
-}
-
 output "bastion_subnet_cidr" {
   value = "${aws_subnet.bastion_subnet.cidr_block}"
 }
