@@ -25,43 +25,6 @@ data "template_file" "user_data" {
 }
 
 # --------------------------------------------------------------------------------------------------------------
-# security groups
-# --------------------------------------------------------------------------------------------------------------
-resource "aws_security_group" "proxy_ssh" {
-  name        = "proxy_ssh"
-  description = "allows ssh access to proxy"
-  vpc_id      = "${var.vpc_id}"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["${var.ssh_inbound}"]
-  }
-
-  # ToDo this could be finessed to just 443 for the target aws environments
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "proxy" {
-  name        = "proxy"
-  description = "allows access to squid proxy"
-  vpc_id      = "${var.vpc_id}"
-
-  ingress {
-    from_port   = 3128
-    to_port     = 3128
-    protocol    = "tcp"
-    cidr_blocks = ["${var.test_vpc_cidr}"]
-  }
-}
-
-# --------------------------------------------------------------------------------------------------------------
 # the EC2 instance
 # --------------------------------------------------------------------------------------------------------------
 
@@ -70,7 +33,7 @@ resource "aws_instance" "proxy" {
   instance_type          = "${var.proxy_instance_type}"
   key_name               = "${var.proxy_key}"
   subnet_id              = "${var.subnet_id}"
-  vpc_security_group_ids = ["${aws_security_group.proxy.id}", "${aws_security_group.proxy_ssh.id}"]
+  vpc_security_group_ids = ["${var.proxy_sg_id}", "${var.ssh_sg_id}"]
 
   root_block_device = {
     volume_type = "gp2"

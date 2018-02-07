@@ -15,28 +15,6 @@ data "aws_ami" "target_ami" {
   }
 }
 
-# ------------------------ security groups --------------------------------------------------------
-
-resource "aws_security_group" "bastion_ssh" {
-  name        = "bastion_ssh"
-  description = "allows ssh access to bastion"
-  vpc_id      = "${var.vpc_id}"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = "${var.ssh_inbound}"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 # ------------------------ Bastion Instance --------------------------------------------------------
 
 resource "aws_instance" "bastion" {
@@ -44,7 +22,7 @@ resource "aws_instance" "bastion" {
   instance_type          = "${var.bastion_instance_type}"
   key_name               = "${var.bastion_key}"
   subnet_id              = "${var.subnet_id}"
-  vpc_security_group_ids = ["${aws_security_group.bastion_ssh.id}"]
+  vpc_security_group_ids = ["${var.ssh_access_sg_id}"]
 
   iam_instance_profile = "${var.profile_name}"
 

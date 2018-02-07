@@ -1,18 +1,14 @@
 variable "subnet_id" {}
-variable "vpc_id" {}
-
-variable "ssh_inbound" {
-  type = "list"
-}
 
 variable "tags" {
   type = "map"
 }
 
-variable "proxy_subnet_cidr" {}
 variable "proxy_address" {}
 variable "test_key" {}
 variable "profile_name" {}
+variable "ssh_sg_id" {}
+variable "proxy_access_sg_id" {}
 
 /* locally defined */
 variable "ec2_user" {
