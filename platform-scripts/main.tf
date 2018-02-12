@@ -50,9 +50,10 @@ module "ssmtest" {
   source             = "./instances/ssmtest"
   tags               = "${var.tags}"
   subnet_id          = "${module.network.test_subnet_id}"
-  ssh_sg_id          = "${module.security.ssh_from_bastion_sg_id}"
+  ssh_sg_id          = "${module.security.ssmtest_ssh_access_sg_id}"
   proxy_access_sg_id = "${module.security.ssmtest_proxy_access_sg_id}"
   profile_name       = "${module.security.ssmtest_profile_name}"
   proxy_address      = "${module.proxy.proxy_private_dns}"
   test_key           = "${var.test_key}"
+  aws_region         = "${var.aws_region}"
 }

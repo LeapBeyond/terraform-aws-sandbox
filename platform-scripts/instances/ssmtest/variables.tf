@@ -9,6 +9,7 @@ variable "test_key" {}
 variable "profile_name" {}
 variable "ssh_sg_id" {}
 variable "proxy_access_sg_id" {}
+variable "aws_region" {}
 
 /* locally defined */
 variable "ec2_user" {

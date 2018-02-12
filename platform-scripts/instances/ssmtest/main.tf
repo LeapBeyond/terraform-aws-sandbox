@@ -15,6 +15,7 @@ data "template_file" "user_data" {
 
   vars {
     proxy_address = "${var.proxy_address}"
+    aws_region    = "${var.aws_region}"
   }
 }
 

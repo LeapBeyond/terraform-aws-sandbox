@@ -1,5 +1,13 @@
-# ------------------------ IAM role for bastion instance -------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------
+# data lookups
+# --------------------------------------------------------------------------------------------------------------
+data "aws_vpc" "ssmtest_vpc" {
+  id = "${var.ssmtest_vpc_id}"
+}
 
+# --------------------------------------------------------------------------------------------------------------
+# IAM Role for bastion instance)
+# --------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "bastion_role" {
   name_prefix           = "bastion"
   path                  = "/"
@@ -18,14 +26,10 @@ resource "aws_iam_instance_profile" "bastion_profile" {
   role        = "${aws_iam_role.bastion_role.name}"
 }
 
-data "aws_vpc" "ssmtest_vpc" {
-  id = "${var.ssmtest_vpc_id}"
-}
-
 # --------------------------------------------------------------------------------------------------------------
-# roles to assign to the EC2 instance(s)
+# IAM role for SSM managed instances
 # --------------------------------------------------------------------------------------------------------------
-resource "aws_iam_role" "test_ssm_role" {
+resource "aws_iam_role" "ssmtest_role" {
   name_prefix           = "testssm"
   path                  = "/"
   description           = "roles polices the test can use"
@@ -33,9 +37,19 @@ resource "aws_iam_role" "test_ssm_role" {
   assume_role_policy    = "${file("${path.module}/templates/ssm-service-role-policy.json")}"
 }
 
+resource "aws_iam_role_policy_attachment" "ssmtest_role_ssm" {
+  role       = "${aws_iam_role.ssmtest_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+}
+
+resource "aws_iam_role_policy_attachment" "ssmtest_role_window" {
+  role       = "${aws_iam_role.ssmtest_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole"
+}
+
 resource "aws_iam_instance_profile" "test_ssm_profile" {
   name_prefix = "testssm"
-  role        = "${aws_iam_role.test_ssm_role.name}"
+  role        = "${aws_iam_role.ssmtest_role.name}"
 }
 
 # --------------------------------------------------------------------------------------------------------------
@@ -107,7 +121,7 @@ resource "aws_security_group" "ssmtest_ssh_access" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.ssh_inbound}"]
+    cidr_blocks = ["${var.bastion_subnet_cidr}"]
   }
 
   egress {
