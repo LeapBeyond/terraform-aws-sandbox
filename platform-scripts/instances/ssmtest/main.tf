@@ -38,10 +38,11 @@ resource "aws_instance" "ssmtest" {
   }
 
   tags {
-    Name    = "ssmtest"
-    Project = "${var.tags["project"]}"
-    Owner   = "${var.tags["owner"]}"
-    Client  = "${var.tags["client"]}"
+    Name       = "ssmtest"
+    Project    = "${var.tags["project"]}"
+    Owner      = "${var.tags["owner"]}"
+    Client     = "${var.tags["client"]}"
+    PatchGroup = "rhel"
   }
 
   volume_tags {

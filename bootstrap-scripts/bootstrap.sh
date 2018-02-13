@@ -38,6 +38,7 @@ do
   then
     aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' | sed -e 's/^"//' -e 's/"$//' -e's/\\n/\
 /g'> ../data/$KEY_NAME.pem
+    aws ssm put-parameter --name ${KEY_NAME}_pem --type SecureString --overwrite --value "$(cat $KEY_NAME.pem)"
     chmod 400 ../data/$KEY_NAME.pem
   fi
   aws ec2 describe-key-pairs --output text --key-name $KEY_NAME

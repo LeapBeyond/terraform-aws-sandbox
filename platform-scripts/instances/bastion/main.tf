@@ -44,62 +44,29 @@ resource "aws_instance" "bastion" {
     Client  = "${var.tags["client"]}"
   }
 
-  provisioner "file" {
-    source      = "${path.root}/../data/${var.test_key}.pem"
-    destination = "/home/${var.bastion_user}/.ssh/${var.test_key}.pem"
-
-    connection {
-      type        = "ssh"
-      user        = "${var.bastion_user}"
-      private_key = "${file("${path.root}/../data/${var.bastion_key}.pem")}"
-      timeout     = "5m"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/../data/${var.proxy_key}.pem"
-    destination = "/home/${var.bastion_user}/.ssh/${var.proxy_key}.pem"
-
-    connection {
-      type        = "ssh"
-      user        = "${var.bastion_user}"
-      private_key = "${file("${path.root}/../data/${var.bastion_key}.pem")}"
-      timeout     = "5m"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod 0400 /home/${var.bastion_user}/.ssh/${var.test_key}.pem",
-      "chmod 0400 /home/${var.bastion_user}/.ssh/${var.proxy_key}.pem",
-    ]
-
-    connection {
-      type        = "ssh"
-      user        = "${var.bastion_user}"
-      private_key = "${file("${path.root}/../data/${var.bastion_key}.pem")}"
-    }
-  }
-
   user_data = <<EOF
 #!/bin/bash
 yum update -y -q
 yum erase -y -q ntp*
 yum -y -q install chrony git
-
 service chronyd start
 
 git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.helper '!aws --profile default codecommit credential-helper $@'
 git config --system credential.https://git-codecommit.${var.aws_region}.amazonaws.com.UseHttpPath true
 
-sudo -u ${var.bastion_user} mkdir ~${var.bastion_user}/.aws ~${var.bastion_user}/bin
+sudo -u ${var.bastion_user} sudo -u ${var.bastion_user} mkdir ~${var.bastion_user}/.aws ~${var.bastion_user}/.ssh ~${var.bastion_user}/bin
 sudo -u ${var.bastion_user} aws configure set region ${var.aws_region}
-sudo -u ${var.bastion_user} aws configure set output json
+sudo -u ${var.bastion_user} sudo -u ${var.bastion_user} aws configure set output json
 cd ~${var.bastion_user}/bin
 sudo -u ${var.bastion_user} wget https://releases.hashicorp.com/terraform/0.10.7/terraform_0.10.7_linux_amd64.zip
 sudo -u ${var.bastion_user} unzip terraform*zip
 cd ..
 sudo -u ${var.bastion_user} git clone https://git-codecommit.${var.aws_region}.amazonaws.com/v1/repos/bastion-smoketest
 
+sudo -u ${var.bastion_user} aws ssm get-parameter --name ${var.test_key}_pem --with-decryption --output text --query Parameter.Value > ~${var.bastion_user}/.ssh/${var.test_key}.pem
+sudo -u ${var.bastion_user} aws ssm get-parameter --name ${var.proxy_key}_pem --with-decryption --output text --query Parameter.Value > ~${var.bastion_user}/.ssh/${var.proxy_key}.pem
+
+chown ${var.bastion_user}:${var.bastion_user} ~${var.bastion_user}/.ssh/*.pem
+chmod 400 ~${var.bastion_user}/.ssh/*.pem
 EOF
 }

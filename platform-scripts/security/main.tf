@@ -16,9 +16,14 @@ resource "aws_iam_role" "bastion_role" {
   assume_role_policy    = "${file("${path.module}/templates/ec2-service-role-policy.json")}"
 }
 
-resource "aws_iam_role_policy_attachment" "bastion-role-codecommit" {
+resource "aws_iam_role_policy_attachment" "bastion_role_codecommit" {
   role       = "${aws_iam_role.bastion_role.name}"
   policy_arn = "arn:aws:iam::aws:policy/AWSCodeCommitReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "bastion_role_ssm_param" {
+  role       = "${aws_iam_role.bastion_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
 resource "aws_iam_instance_profile" "bastion_profile" {
