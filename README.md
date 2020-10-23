@@ -14,7 +14,7 @@ First modify and execute the `bootstrap-scripts` to get the base accounts, group
 Second setup `terraform.tfvars` for the `platform-scripts`, then do appropriate `terraform init` & `terraform apply` to get it all up and running. Be aware that the terraform scripts may complete well before the EC2 instances finish initialising.
 
 ## License
-Copyright 2018 Leap Beyond Analytics
+Copyright 2018 Leap Beyond Emerging Technologies B.V.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
